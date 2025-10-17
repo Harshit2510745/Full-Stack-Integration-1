@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List Frontend</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Babel for JSX transpilation -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Axios for HTTP requests -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ProductCard component to display a single product
+        const ProductCard = ({ product }) => {
+            return (
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 flex flex-col items-center shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <h3 className="text-2xl font-bold mb-2">{product.name}</h3>
+                    <p className="text-lg text-gray-400 mb-4">Price: ${product.price}</p>
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">
+                        Buy Now
+                    </button>
+                </div>
+            );
+        };
+
+        // Main App component
+        const App = () => {
+            // State for products, loading, and errors
+            const [products, setProducts] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+
+            // useEffect to fetch data when the component mounts
+            useEffect(() => {
+                // Define the API endpoint
+                const apiUrl = 'http://localhost:3001/api/products';
+                
+                axios.get(apiUrl)
+                    .then(response => {
+                        setProducts(response.data);
+                        setError(null);
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
+                        // Provide a more detailed error message for network errors
+                        let errorMessage = "Failed to fetch products.";
+                        if (error.message.includes('Network Error')) {
+                            errorMessage += " This usually means the backend server is not running or is unreachable. Please ensure the server is started and accessible at http://localhost:3001.";
+                        } else {
+                            errorMessage += ` Details: ${error.message}`;
+                        }
+                        setError(errorMessage);
+                    })
+                    .finally(() => {
+                        setLoading(false);
+                    });
+            }, []); // Empty dependency array means this runs once on mount
+
+            return (
+                <div className="container mx-auto p-8">
+                    <h1 className="text-5xl font-extrabold text-center mb-12">Product List</h1>
+
+                    {/* Conditional rendering for loading state */}
+                    {loading && <p className="text-center text-xl">Loading products...</p>}
+                    
+                    {/* Conditional rendering for error state */}
+                    {error && <p className="text-center text-xl text-red-500 bg-red-900/50 p-4 rounded-lg">{error}</p>}
+                    
+                    {/* Render product list if not loading and no error */}
+                    {!loading && !error && (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                            {products.map(product => (
+                                <ProductCard key={product.id} product={product} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
